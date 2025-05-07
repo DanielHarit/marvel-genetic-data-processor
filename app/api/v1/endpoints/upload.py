@@ -7,11 +7,12 @@ from app.db.session import get_db
 from app.services.processing import process_zip_file
 from app.services.s3_service import s3_service
 from app.utils.logger import logger
+from app.core.security import get_current_user
 
 router = APIRouter()
 
 @router.post("/generate-upload-url")
-async def generate_upload_url():
+async def generate_upload_url(current_user: str = Depends(get_current_user)):
     """
     Generate a presigned URL for uploading a file to S3.
     The URL will be valid for 1 hour.
@@ -42,7 +43,7 @@ async def generate_upload_url():
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 @router.post("/upload")
-async def upload_genetic_data(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_genetic_data(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     logger.info(f"Processing upload request for file: {file.filename}")
     
     if not file.filename.endswith('.zip'):

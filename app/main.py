@@ -5,7 +5,7 @@ import threading
 import logging
 
 from app.core.config import settings
-from app.api.v1.endpoints import upload, stats
+from app.api.v1.endpoints import upload, stats, auth
 from app.db.base_class import Base
 from app.db.session import engine, SessionLocal
 from app.services.sqs_service import sqs_service
@@ -48,7 +48,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(upload.router, prefix=settings.API_V1_STR)
-app.include_router(stats.router, prefix=settings.API_V1_STR) 
+app.include_router(stats.router, prefix=settings.API_V1_STR)
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 
 # Get uvicorn access and error loggers
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
