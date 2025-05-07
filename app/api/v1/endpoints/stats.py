@@ -15,11 +15,7 @@ def get_stats(db: Session = Depends(get_db), current_user: str = Depends(get_cur
     characters = crud.get_characters(db)
     
     # Generate visualizations
-    visualizations = {
-        "power_level_distribution": visualization_service.generate_power_level_distribution(characters),
-        "gc_content_distribution": visualization_service.generate_gc_content_distribution(characters),
-        "affiliation_distribution": visualization_service.generate_affiliation_pie_chart(characters)
-    }
+    visualizations = visualization_service.get_visualizations(characters)
     
     # Get stats
     stats = crud.get_characters_stats(db)
@@ -31,7 +27,11 @@ def get_stats(db: Session = Depends(get_db), current_user: str = Depends(get_cur
 
 @router.get("/affiliation/{affiliation}", response_model=AffiliationStatsResponse)
 def get_affiliation_stats(affiliation: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
-    return crud.get_affiliation_stats(db, affiliation) 
+    characters = crud.get_characters_by_affiliation(db, affiliation)
+    visualizations = visualization_service.get_visualizations(characters)
+    stats = crud.get_affiliation_stats(db, affiliation)
+    stats["visualizations"] = visualizations
+    return stats
 
 @router.get("/character/{name}", response_model=CharacterStatsResponse)
 def get_character_stats(name: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):

@@ -59,5 +59,12 @@ class VisualizationService:
         plt.close()
         
         return f"/static/graphs/{filename}"
+    
+    def get_visualizations(self, characters: List[Character]) -> Dict[str, str]:
+        return {
+            "power_level_distribution": self.generate_power_level_distribution(characters),
+            "gc_content_distribution": self.generate_gc_content_distribution(characters),
+            "affiliation_distribution": self.generate_affiliation_pie_chart(characters)
+        }
 
 visualization_service = VisualizationService() 
