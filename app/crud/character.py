@@ -27,7 +27,7 @@ def create_pattern(db: Session, character_id: int, pattern: str, count: int):
     db.add(pattern_record)
     return pattern_record
 
-def get_character_stats(db: Session):
+def get_characters_stats(db: Session):
     # Get GC content by character
     characters = db.query(Character).all()
     gc_content_by_character = {
@@ -54,6 +54,10 @@ def get_character_stats(db: Session):
         "common_patterns": common_patterns,
         "power_level_distribution": power_level_distribution
     }
+
+def get_character_stats(db: Session, name: str):
+    character = db.query(Character).filter(Character.character_name == name).first()
+    return character
 
 def get_affiliation_stats(db: Session, affiliation: str):
     # Get GC content by character for the affiliation

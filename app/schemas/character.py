@@ -30,3 +30,9 @@ class StatsResponse(BaseModel):
 
 class AffiliationStatsResponse(StatsResponse):
     pass 
+
+class CharacterStatsResponse(CharacterBase):
+    gc_content: float
+    power_level_group: str
+    patterns: List[PatternBase]
+    id: int
