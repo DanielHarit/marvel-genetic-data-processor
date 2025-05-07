@@ -1,0 +1,8 @@
+data
+.venv
+.env
+.cursor
+.vscode
+marvel_genetics.db
+
+.DS_Store
