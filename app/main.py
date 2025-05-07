@@ -1,18 +1,38 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import threading
 
 from app.core.config import settings
 from app.api.v1.endpoints import upload, stats
 from app.db.base_class import Base
-from app.db.session import engine
+from app.db.session import engine, SessionLocal
+from app.services.sqs_service import sqs_service
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Set up SQS processing
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db = SessionLocal()
+
+    # Start SQS processor in a background thread
+    thread = threading.Thread(target=sqs_service.process_messages, args=(db,),daemon=True)
+    thread.start()
+    print("🟢 SQS background processor started.")
+
+    # Yield control to FastAPI app
+    yield
+
+    db.close()
+    print("🔴 SQS background processor stopped.")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
 )
 
 # Set up CORS

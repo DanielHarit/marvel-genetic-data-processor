@@ -1,18 +1,36 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
-import zipfile
-import io
+import uuid
+from datetime import datetime
 
 from app.db.session import get_db
-from app.crud import character as crud
-from app.services.processing import (
-    calculate_gc_content,
-    find_repeating_patterns,
-    determine_power_level_group,
-    parse_genetic_file
-)
+from app.services.processing import process_zip_file
+from app.services.s3_service import s3_service
 
 router = APIRouter()
+
+@router.post("/generate-upload-url")
+async def generate_upload_url():
+    """
+    Generate a presigned URL for uploading a file to S3.
+    The URL will be valid for 1 hour.
+    """
+    # Generate a unique object key with proper path structure
+    object_key = f"uploads/{datetime.utcnow().strftime('%Y/%m/%d')}/{uuid.uuid4()}.zip"
+    
+    # Generate the presigned URL with content type
+    presigned_url = s3_service.generate_presigned_url(
+        object_key,
+        content_type="application/zip"
+    )
+    if not presigned_url:
+        raise HTTPException(status_code=500, detail="Failed to generate upload URL")
+    
+    return {
+        "upload_url": presigned_url,
+        "object_key": object_key,
+        "expires_in": "1 hour"
+    }
 
 @router.post("/upload")
 async def upload_genetic_data(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -21,45 +39,8 @@ async def upload_genetic_data(file: UploadFile = File(...), db: Session = Depend
 
     # Read the ZIP file
     contents = await file.read()
-    with zipfile.ZipFile(io.BytesIO(contents)) as zip_ref:
-        for filename in zip_ref.namelist():
-            # Skip non-data files
-            if not any(filename.endswith(ext) for ext in ['.json', '.txt', '.b64']):
-                continue
-            if any(filename.startswith(ext) for ext in ['.', '..', '__MACOSX']):
-                continue
-
-            # Read file content
-            content = zip_ref.read(filename).decode('utf-8')
-            
-            # Process the file content
-            characters_data = parse_genetic_file(content, filename)
-
-            for char_data in characters_data:
-                # Validate required fields
-                required_fields = ['character_name', 'affiliation', 'genetic_sequence', 'power_level']
-                if not all(field in char_data for field in required_fields):
-                    continue
-
-                try:
-                    # Create character record
-                    character = crud.create_character(db, {
-                        **char_data,
-                        'gc_content': calculate_gc_content(char_data['genetic_sequence']),
-                        'power_level_group': determine_power_level_group(char_data['power_level'])
-                    })
-                except Exception as e:
-                    print(f"Error creating character {char_data['character_name']} with error: {e}")
-                    continue
-
-                try:
-                    # Process patterns
-                    patterns = find_repeating_patterns(char_data['genetic_sequence'])
-                    for pattern, count in patterns:
-                        crud.create_pattern(db, character.id, pattern, count)
-                except Exception as e:
-                    print(f"Error processing patterns for character {char_data['character_name']} with error: {e}")
-                    continue
-
-    db.commit()
+    
+    # Process the ZIP file
+    process_zip_file(contents, db)
+    
     return {"message": "Data processed successfully"} 
