@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from app.db.base_class import Base
 
 class Character(Base):
     __tablename__ = "characters"
@@ -14,8 +13,7 @@ class Character(Base):
     power_level = Column(Integer)
     gc_content = Column(Float)
     power_level_group = Column(String)
-    # TODO: logest repeat pattern?
-    # TODO: timestamp?
+
     patterns = relationship("Pattern", back_populates="character")
 
 class Pattern(Base):
@@ -26,8 +24,4 @@ class Pattern(Base):
     pattern = Column(String, index=True)
     count = Column(Integer)
 
-    character = relationship("Character", back_populates="patterns")
-
-# Create SQLite database
-engine = create_engine("sqlite:///./marvel_genetics.db")
-Base.metadata.create_all(bind=engine) 
+    character = relationship("Character", back_populates="patterns") 
