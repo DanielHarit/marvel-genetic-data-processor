@@ -1,7 +1,7 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import threading
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from app.core.config import settings
@@ -17,17 +17,14 @@ Base.metadata.create_all(bind=engine)
 # Set up SQS processing
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db = SessionLocal()
 
     # Start SQS processor in a background thread
-    thread = threading.Thread(target=sqs_service.process_messages, args=(db,),daemon=True)
+    thread = threading.Thread(target=sqs_service.process_messages, daemon=True)
     thread.start()
     logger.info("SQS background processor started.")
 
     # Yield control to FastAPI app
     yield
-
-    db.close()
     logger.info("SQS background processor stopped.")
 
 app = FastAPI(

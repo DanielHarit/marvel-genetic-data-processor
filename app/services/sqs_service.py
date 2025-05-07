@@ -2,11 +2,12 @@ import boto3
 import json
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
-
 from app.core.config import settings
 from app.services.processing import process_zip_file
 from app.services.s3_service import s3_service
+from app.db.session import SessionLocal
 from app.utils.logger import logger
+
 class SQSService:
     def __init__(self):
         self.sqs_client = boto3.client(
@@ -17,12 +18,10 @@ class SQSService:
         )
         self.queue_url = settings.AWS_SQS_QUEUE_URL
 
-    def process_messages(self, db_session: Session):
+    def process_messages(self):
         """
         Poll the SQS queue and process messages.
-        
-        Args:
-            db_session: SQLAlchemy database session
+        Creates a new database session for each message to avoid locks.
         """
         while True:
             try:
@@ -35,6 +34,8 @@ class SQSService:
 
                 messages = response.get('Messages', [])
                 for message in messages:
+                    # Create a new database session for each message
+                    db = SessionLocal()
                     try:
                         # Parse the message body
                         body = json.loads(message['Body'])
@@ -50,17 +51,20 @@ class SQSService:
                             continue
 
                         # Process the ZIP file
-                        process_zip_file(file_content, db_session)
+                        process_zip_file(file_content, db)
 
                         # Delete the processed message
                         self.sqs_client.delete_message(
                             QueueUrl=self.queue_url,
                             ReceiptHandle=message['ReceiptHandle']
                         )
+                        logger.info(f"Successfully processed message for file: {s3_key}")
 
                     except Exception as e:
                         logger.exception(f"Error processing message: {e}")
-                        continue
+                    finally:
+                        # Always close the database session
+                        db.close()
 
             except Exception as e:
                 logger.exception(f"Error polling queue: {e}")
