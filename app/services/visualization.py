@@ -10,7 +10,7 @@ from app.utils.logger import logger
 
 class VisualizationService:
     def __init__(self):
-        self.static_dir = "static/graphs"
+        self.static_dir = "app/static/graphs"
         os.makedirs(self.static_dir, exist_ok=True)
 
     def generate_power_level_distribution(self, characters: List[Character]) -> str:

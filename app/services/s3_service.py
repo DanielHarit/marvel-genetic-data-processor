@@ -86,5 +86,18 @@ class S3Service:
             logger.exception(f"Unexpected error retrieving object: {e}")
             return None
 
+    def delete_object(self, key: str) -> bool:
+        """Delete an object from S3."""
+        try:
+            self.s3_client.delete_object(
+                Bucket=self.bucket_name,
+                Key=key
+            )
+            logger.info(f"Successfully deleted object {key} from S3")
+            return True
+        except ClientError as e:
+            logger.error(f"Error deleting object {key} from S3: {e}")
+            return False
+
 # Create a singleton instance
 s3_service = S3Service() 

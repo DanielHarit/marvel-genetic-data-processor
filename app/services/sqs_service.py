@@ -53,12 +53,17 @@ class SQSService:
                         # Process the ZIP file
                         process_zip_file(file_content, db)
 
-                        # Delete the processed message
+                        # Delete the processed message from SQS
                         self.sqs_client.delete_message(
                             QueueUrl=self.queue_url,
                             ReceiptHandle=message['ReceiptHandle']
                         )
-                        logger.info(f"Successfully processed message for file: {s3_key}")
+
+                        # Delete the processed file from S3
+                        if s3_service.delete_object(s3_key):
+                            logger.info(f"Successfully processed and cleaned up file: {s3_key}")
+                        else:
+                            logger.warning(f"File processed but failed to delete from S3: {s3_key}")
 
                     except Exception as e:
                         logger.exception(f"Error processing message: {e}")

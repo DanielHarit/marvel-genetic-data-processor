@@ -50,7 +50,7 @@ app.include_router(stats.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Get uvicorn access and error loggers
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
