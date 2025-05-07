@@ -1,8 +1,10 @@
-data
 .venv
 .env
 .cursor
 .vscode
+__pycache__
+
 marvel_genetics.db
+data
 
 .DS_Store
