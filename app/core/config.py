@@ -17,6 +17,18 @@ class Settings(BaseSettings):
     # S3 Upload Settings
     S3_UPLOAD_EXPIRATION: int = 3600  # URL expiration time in seconds
     
+    # Genetic Analysis Settings
+    MIN_PATTERN_LENGTH: int = 2
+    TOP_PATTERNS_COUNT: int = 5
+    
+    # Power Level Thresholds
+    POWER_LEVEL_LOW_THRESHOLD: int = 33
+    POWER_LEVEL_MEDIUM_THRESHOLD: int = 66
+    
+    # Logging Settings
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
     class Config:
         case_sensitive = True
         env_file = ".env"

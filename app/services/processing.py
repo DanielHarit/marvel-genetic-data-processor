@@ -6,14 +6,15 @@ import zipfile
 import io
 from sqlalchemy.orm import Session
 from app.crud import character as crud
-
+from app.utils.logger import logger
+from app.core.config import settings
 
 def calculate_gc_content(sequence: str) -> float:
     """Calculate GC content of a genetic sequence."""
     gc_count = sequence.upper().count('G') + sequence.upper().count('C')
     return (gc_count / len(sequence)) * 100 if sequence else 0
 
-def find_repeating_patterns(sequence: str, min_length: int = 2) -> List[Tuple[str, int]]:
+def find_repeating_patterns(sequence: str, min_length: int = settings.MIN_PATTERN_LENGTH) -> List[Tuple[str, int]]:
     """Find all repeating patterns in a sequence, incrementally increasing pattern length."""
     patterns = []
     length = min_length
@@ -40,9 +41,9 @@ def find_repeating_patterns(sequence: str, min_length: int = 2) -> List[Tuple[st
 
 def determine_power_level_group(power_level: int) -> str:
     """Determine power level group based on thresholds."""
-    if power_level < 33:
+    if power_level < settings.POWER_LEVEL_LOW_THRESHOLD:
         return "low"
-    elif power_level < 66:
+    elif power_level < settings.POWER_LEVEL_MEDIUM_THRESHOLD:
         return "medium"
     else:
         return "high"
@@ -143,7 +144,7 @@ def process_zip_file(zip_content: bytes, db: Session) -> None:
                 continue
             if any(filename.startswith(ext) for ext in ['.', '..', '__MACOSX']):
                 continue
-            
+
             # Read file content
             content = zip_ref.read(filename).decode('utf-8')
             
@@ -164,7 +165,7 @@ def process_zip_file(zip_content: bytes, db: Session) -> None:
                         'power_level_group': determine_power_level_group(char_data['power_level'])
                     })
                 except Exception as e:
-                    print(f"Error creating character {char_data['character_name']} with error: {e}")
+                    logger.exception(f"Error creating character {char_data['character_name']} with error: {e}")
                     continue
 
                 try:
@@ -173,7 +174,7 @@ def process_zip_file(zip_content: bytes, db: Session) -> None:
                     for pattern, count in patterns:
                         crud.create_pattern(db, character.id, pattern, count)
                 except Exception as e:
-                    print(f"Error processing patterns for character {char_data['character_name']} with error: {e}")
+                    logger.exception(f"Error processing patterns for character {char_data['character_name']} with error: {e}")
                     continue
 
     db.commit() 

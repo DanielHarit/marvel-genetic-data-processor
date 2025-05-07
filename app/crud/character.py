@@ -3,6 +3,7 @@ from sqlalchemy import func
 
 from app.models.character import Character, Pattern
 from app.schemas.character import CharacterCreate
+from app.core.config import settings
 
 def create_character(db: Session, character_data: dict):
     character = Character(
@@ -37,7 +38,7 @@ def get_character_stats(db: Session):
     patterns = db.query(Pattern.pattern, func.sum(Pattern.count).label('total_count'))\
         .group_by(Pattern.pattern)\
         .order_by(func.sum(Pattern.count).desc())\
-        .limit(10)\
+        .limit(settings.TOP_PATTERNS_COUNT)\
         .all()
     common_patterns = [{p[0]: p[1]} for p in patterns]
 

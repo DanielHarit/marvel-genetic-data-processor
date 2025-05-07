@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.services.processing import process_zip_file
 from app.services.s3_service import s3_service
-
+from app.utils.logger import logger
 class SQSService:
     def __init__(self):
         self.sqs_client = boto3.client(
@@ -59,11 +59,11 @@ class SQSService:
                         )
 
                     except Exception as e:
-                        print(f"Error processing message: {e}")
+                        logger.exception(f"Error processing message: {e}")
                         continue
 
             except Exception as e:
-                print(f"Error polling queue: {e}")
+                logger.exception(f"Error polling queue: {e}")
                 continue
 
 sqs_service = SQSService() 
