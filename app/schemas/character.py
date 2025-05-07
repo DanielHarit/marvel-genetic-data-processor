@@ -27,6 +27,7 @@ class StatsResponse(BaseModel):
     gc_content_by_character: Dict[str, float]
     common_patterns: List[Dict[str, int]]
     power_level_distribution: Dict[str, int]
+    visualizations: Dict[str, str]
 
 class AffiliationStatsResponse(StatsResponse):
     pass 

@@ -59,6 +59,10 @@ def get_character_stats(db: Session, name: str):
     character = db.query(Character).filter(Character.character_name == name).first()
     return character
 
+def get_characters(db: Session):
+    characters = db.query(Character).all()
+    return characters
+
 def get_affiliation_stats(db: Session, affiliation: str):
     # Get GC content by character for the affiliation
     characters = db.query(Character).filter(Character.affiliation == affiliation).all()

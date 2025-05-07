@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import threading
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import logging
 
 from app.core.config import settings
@@ -47,6 +48,9 @@ app.add_middleware(
 app.include_router(upload.router, prefix=settings.API_V1_STR)
 app.include_router(stats.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Get uvicorn access and error loggers
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
